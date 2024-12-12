@@ -29,7 +29,7 @@ class Stack:
 
 class Explorer(AbstAgent):
     """ class attribute """
-    MAX_DIFFICULTY = 20             # the maximum degree of difficulty to enter into a cell        
+    MAX_DIFFICULTY = 3             # the maximum degree of difficulty to enter into a cell        
     
     def __init__(self, env, config_file, resc):
         """ Construtor do agente random on-line
@@ -87,19 +87,31 @@ class Explorer(AbstAgent):
     # 6: (-1, 0),  #  l: Left
     # 7: (-1, -1)  # ul: Up left diagonal        
     def actions(self, position):
-        orderToCorner = {
+
+        simple_moves = [0, 2, 4, 6]  # U, R, D, L
+        diagonal_moves = [1, 3, 5, 7]  # UR, DR, DL, UL
+
+        orderToCorners = {
             "EXPL_1": [1, 2, 0, 3, 7, 4, 6, 5], # Corner Up Right 
             "EXPL_2": [7, 6, 0, 1, 5, 4, 2, 3], # Corner Up Left 
             "EXPL_3": [5, 6, 4, 7, 3, 0, 2, 1], # Corner Down Left 
             "EXPL_4": [3, 2, 4, 5, 1, 0, 6, 7], # Corner Down Right 
         }
         
+        orderToCorner = {
+            "EXPL_1": [0, 2, 4, 1, 3, 7, 6, 5], # Corner Up Right 
+            "EXPL_2": [4, 2, 0, 3, 1, 5, 6, 7], # Corner down Right 
+            "EXPL_3": [4, 6, 0, 5, 1, 3, 2, 7], # Corner Down Left 
+            "EXPL_4": [0, 6, 4, 1, 5, 7, 2, 3], # Corner Up Left 
+        }
+
         # Obtem a ordem baseada no nome do robô
         if self.walk_time <= self.TLIM*0.4:
             order = orderToCorner.get(self.NAME, list(self.AC_INCR.keys()))
         else:
-            order = list(self.AC_INCR.keys())
-            random.shuffle(order)
+            random.shuffle(simple_moves)
+            random.shuffle(diagonal_moves)
+            order = simple_moves + diagonal_moves
         
         if position in self.untried_move_by_pos:
             # Ordena as ações restantes de acordo com a ordem definida para o robô
@@ -118,7 +130,7 @@ class Explorer(AbstAgent):
 
 
     def manhattan_distance(self, position):
-        return abs(position[0])+abs(position[1])
+        return abs(position[0])+abs(position[1])*1.5
 
 
     # Function to explore map while have time remaining
@@ -259,14 +271,12 @@ class Explorer(AbstAgent):
                 self.victims[vs[0]] = ((self.x, self.y), vs)
                 #print(f"{self.NAME} Victim found at ({self.x}, {self.y}), rtime: {self.get_rtime()}")
                 #print(f"{self.NAME} Seq: {seq} Vital signals: {vs}")
-            
             # Calculates the difficulty of the visited cell
             difficulty = (rtime_bef - rtime_aft)
             if dx == 0 or dy == 0:
                 difficulty = difficulty / self.COST_LINE
             else:
                 difficulty = difficulty / self.COST_DIAG
-
             # Update the map with the new cell
             self.map.add((self.x, self.y), difficulty, seq, self.check_walls_and_lim())
             #print(f"{self.NAME}:at ({self.x}, {self.y}), diffic: {difficulty:.2f} vict: {seq} rtime: {self.get_rtime()}")
@@ -303,8 +313,11 @@ class Explorer(AbstAgent):
         """ The agent chooses the next action. The simulator calls this
         method at each cycle. Must be implemented in every agent"""
 
+        # Time to go, read and comeback
+        time_tolerance = 2* self.COST_DIAG * Explorer.MAX_DIFFICULTY + self.COST_READ
+
         # keeps exploring while there is enough time
-        if self.get_rtime() > self.manhattan_distance((self.x, self.y))*self.COST_LINE*1.5 + 50 and self.flag_explore:
+        if ( self.get_rtime() > (self.manhattan_distance((self.x, self.y)) + time_tolerance + 10) ) and self.flag_explore:
             self.explore()
             return True
 
