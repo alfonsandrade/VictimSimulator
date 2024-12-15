@@ -72,6 +72,7 @@ class Explorer(AbstAgent):
         # Adiciona a posição atual (a base) no mapa
         self.map.add((self.x, self.y), 1, VS.NO_VICTIM, self.check_walls_and_lim())
 
+
     def search_key(self, d, position, target):
         """Busca uma chave em d onde 'position' está na chave (tupla) e o valor == target."""
         for key, value in d.items():

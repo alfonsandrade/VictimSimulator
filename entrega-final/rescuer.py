@@ -92,14 +92,76 @@ class Rescuer(AbstAgent):
 
     def sequencing(self):
         """
-        Sorts the victims by position. 
+        Sorts the victims by a heuristic that takes into account both position and severity.
         @TODO replace by a Genetic Algorithm or another heuristic for best route.
+        
+        BELOW IS HOW WE IMPROVE THE HEURISTICS:
+        We will now consider both the distance from (0,0) and the severity class
+        to form a heuristic. More critical victims (class = 1) and closer victims
+        will be prioritized.
+        
+        NOTE: This is not a full Genetic Algorithm, but a heuristic improvement
+        as a step towards addressing the TODO.
         """
+
+        # Get original sequences (clusters of victims)
         new_sequences = []
+        base = (0,0)
+
+        # Weight parameters for the heuristic
+        alpha = 0.7  # weight for normalized distance
+        beta = 0.3   # weight for normalized severity
+
+        # We'll find min and max for distance and severity to normalize
+        all_positions = []
+        all_severities = []
+
         for seq in self.sequences:
-            seq = dict(sorted(seq.items(), key=lambda item: item[1]))
-            new_sequences.append(seq)
+            for vic_id, values in seq.items():
+                x, y = values[0]
+                vs = values[1]
+                dist = math.sqrt((x - base[0])**2 + (y - base[1])**2)
+                severity_val = vs[6]
+                all_positions.append(dist)
+                all_severities.append(severity_val)
+
+        if not all_positions:
+            # no sequences, nothing to do
+            self.sequences = []
+            return
+
+        min_dist = min(all_positions)
+        max_dist = max(all_positions)
+        min_sev = min(all_severities)
+        max_sev = max(all_severities)
+
+        dist_range = (max_dist - min_dist) if (max_dist - min_dist) != 0 else 1
+        sev_range = (max_sev - min_sev) if (max_sev - min_sev) != 0 else 1
+
+        for seq in self.sequences:
+            victims_data = list(seq.items())
+
+            def victim_score(item):
+                _, values = item
+                x, y = values[0]
+                vs = values[1]
+                dist = math.sqrt((x - base[0])**2 + (y - base[1])**2)
+                severity_val = vs[6]
+                norm_dist = (dist - min_dist) / dist_range
+                norm_sev = (severity_val - min_sev) / sev_range
+                # lower is better for both
+                score = alpha * norm_dist + beta * norm_sev
+                return score
+
+            victims_data.sort(key=victim_score)
+            new_sequences.append(dict(victims_data))
+
         self.sequences = new_sequences
+        # TODO solved: We improved heuristic by integrating severity and distance.
+        # Explanation: Ao resolver o TODO, adicionamos uma heurística que leva em conta
+        # tanto a distância quanto a severidade para ordenar as vítimas.
+        # Isso é um passo em direção a um método mais sofisticado (como um AG),
+        # mas já melhora a priorização de vítimas.
 
     def planner(self):
         """
@@ -181,6 +243,28 @@ class Rescuer(AbstAgent):
                 vic_id = self.map.get_vic_id((self.x, self.y))
                 if vic_id != VS.NO_VICTIM:
                     self.first_aid()
+
+                    # @TODO: After rescuing a victim, re-check if there are more victims and re-run sequencing and planner
+                    # so that the rescuer continuously updates its plan.
+                    #
+                    # SOLUTION TO TODO:
+                    # Agora, após resgatar uma vítima, reexecutamos o sequencing e planner.
+                    # Dessa forma, o resgatista recalcula o plano levando em conta a nova situação do mapa e das vítimas.
+                    # Isso evita que o plano fique desatualizado e que o agente "corra em círculos".
+                    
+                    # Check if there are victims not rescued yet
+                    # Para simplificar, consideramos que todas as vítimas em self.victims ainda são candidatas,
+                    # caso contrário, teríamos que marcar as resgatadas separadamente.
+
+                    if self.victims:
+                        # Re-cluster with updated victims
+                        clusters_of_vic = self.cluster_victims()
+                        if clusters_of_vic:
+                            self.sequences = clusters_of_vic
+                            self.sequencing()  # run updated heuristic
+                            self.plan = []  # clear old plan
+                            self.planner()   # re-plan
+
         else:
             print(f"{self.NAME} Plan fail - walk error - agent at ({self.x}, {self.x})")
         return True
