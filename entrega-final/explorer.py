@@ -40,11 +40,7 @@ class Explorer(AbstAgent):
 
         super().__init__(env, config_file)
 
-        # {((0, 0), 1): (1, -1), ((1, -1), 1): (2, -2)}  -> pos_init, move: pos_after
-        self.dfs_moveResults = {}       # armazena a posição obtida de acordo com o movimento realizado na posição passada
-
-        # {(1, -1): [(0, 0)], (2, -2): [(1, -1)]}        -> pos_after: pos_init
-        self.unbacktracked = {}         # dicionario de movimentos para backtrack por cada posição
+        self.unbackpositions = Stack()   # a stack to store the movements to return to the origin
 
         # {(0, 0): [2, 0, 3, 7, 4, 6, 5], (1, -1): [1, 2, 0, 3, 7, 4, 6, 5]}      -> pos: untried_Movements
         self.untried_move_by_pos = {}   # Retorna os movimentos ainda nao tentados para determinada posição
@@ -55,8 +51,8 @@ class Explorer(AbstAgent):
         self.is_unbacktracking = False  # Flag para indicar se o robo esta em movimento de backtracking
         self.flag_explore = True        # Flag para indicar se esta em exploraçao ou come_back
         self.last_position = None       # Armazena a ultima posição do robo
-        self.last_movement = None       # Armazena o ultimo movimento do robo
 
+        self.reverse_map = {movement: key for key, movement in Explorer.AC_INCR.items()}
 
         self.walk_time = 0              # time consumed to walk when exploring (to decide when to come back)
         self.set_state(VS.ACTIVE)       # explorer is active since the begin
@@ -71,13 +67,6 @@ class Explorer(AbstAgent):
         self.map.add((self.x, self.y), 1, VS.NO_VICTIM, self.check_walls_and_lim())
 
 
-    def search_key(self, dict, position, target):
-            for key, value in dict.items():
-                if position in key:
-                    if value == target:
-                        return key
-
-
     # 0: (0, -1),  #  u: Up
     # 1: (1, -1),  # ur: Upper right diagonal
     # 2: (1, 0),   #  r: Right
@@ -87,16 +76,6 @@ class Explorer(AbstAgent):
     # 6: (-1, 0),  #  l: Left
     # 7: (-1, -1)  # ul: Up left diagonal        
     def actions(self, position):
-
-        simple_moves = [0, 2, 4, 6]  # U, R, D, L
-        diagonal_moves = [1, 3, 5, 7]  # UR, DR, DL, UL
-
-        orderToCorners = {
-            "EXPL_1": [1, 2, 0, 3, 7, 4, 6, 5], # Corner Up Right 
-            "EXPL_2": [7, 6, 0, 1, 5, 4, 2, 3], # Corner Up Left 
-            "EXPL_3": [5, 6, 4, 7, 3, 0, 2, 1], # Corner Down Left 
-            "EXPL_4": [3, 2, 4, 5, 1, 0, 6, 7], # Corner Down Right 
-        }
         
         orderToCorner = {
             "EXPL_1": [0, 2, 4, 1, 3, 7, 6, 5], # Corner Up Right 
@@ -106,63 +85,55 @@ class Explorer(AbstAgent):
         }
 
         # Obtem a ordem baseada no nome do robô
-        if self.walk_time <= self.TLIM*0.4:
-            order = orderToCorner.get(self.NAME, list(self.AC_INCR.keys()))
-        else:
-            random.shuffle(simple_moves)
-            random.shuffle(diagonal_moves)
-            order = simple_moves + diagonal_moves
+        order = orderToCorner.get(self.NAME, list(self.AC_INCR.keys()))
         
-        if position in self.untried_move_by_pos:
-            # Ordena as ações restantes de acordo com a ordem definida para o robô
-            return sorted(self.untried_move_by_pos[position], key=lambda x: order.index(x))
-        else:
-            # Retorna todas as ações, já ordenadas pela sequência do robô
-            return order
-        
-
-    def add_unbacktracked(self, position):
-        if self.last_position != position:
-            if position not in list(self.unbacktracked.keys()):
-                self.unbacktracked[position] = [self.last_position]
-            else:
-                self.unbacktracked[position].insert(0,self.last_position)
+        # Retorna todas as ações, já ordenadas pela sequência do robô
+        return order
 
 
     def manhattan_distance(self, position):
         return abs(position[0])+abs(position[1])*1.5
 
 
-    # Function to explore map while have time remaining
+    # Função para realizar a exploração do mapa
     def online_dfs(self, position):
+
+        # Verifica se é uma nova posição e ordena seus movimentos
         if position not in self.untried_move_by_pos:
             self.untried_move_by_pos[position] = self.actions(position)
 
-        # Checa se moveu-se para um novo estado, se sim e não esta em backtracking, adiciona o last_state para backtracking
-        if self.last_position != None and self.last_position != position:
-            self.dfs_moveResults[(self.last_position, self.last_movement)] = position
-            if not self.is_unbacktracking:
-                self.add_unbacktracked(position)
-
         # Checa se já realizou todas as ações possiveis para o estado atual
         if len(self.untried_move_by_pos[position]) == 0:
-            if len(self.unbacktracked[position]) == 0:
-                return (0,0)
-            else:
-                unback_pos = self.unbacktracked[position][0]
-                del(self.unbacktracked[position][0])
 
+            # ERRO
+            if self.unbackpositions.is_empty():
+                print('Error: UnpackPositions is empty')
+                return (0,0)
+            
+            # Realizando o backtrack
+            else:
                 self.is_unbacktracking = True
                 
+                # Pegando a posicao para unbacktrack
+                unback_pos = self.unbackpositions.pop()
+                while unback_pos == position:
+                    unback_pos = self.unbackpositions.pop()
+           
+                # Obtendo o movimento para voltar a essa posicao
+                movement = self.reverse_map.get( (unback_pos[0] - position[0], unback_pos[1] - position[1]) )
 
-                self.last_movement = self.search_key(self.dfs_moveResults, position, unback_pos)[1]
+        # Caso ainda tenha ações possiveis para o estado atual
         else:
             self.is_unbacktracking = False
-            self.last_movement = self.untried_move_by_pos[position][0]
-            del(self.untried_move_by_pos[position][0])
+            movement = self.untried_move_by_pos[position][0]
+            del self.untried_move_by_pos[position][0]
 
+        # Checa se moveu-se para um novo estado, se sim e não esta em backtracking, adiciona o last_state para backtracking
+        if self.last_position != None and self.last_position != position and not self.is_unbacktracking:
+            self.unbackpositions.push(position)
+                
         self.last_position = position
-        return self.last_movement
+        return movement
 
     def reconstruct_path(self, came_from, current):
         total_path = [current]
@@ -221,19 +192,20 @@ class Explorer(AbstAgent):
     
 
     def get_next_position(self):
-        """ Randomically, gets the next position that can be explored (no wall and inside the grid)
-            There must be at least one CLEAR position in the neighborhood, otherwise it loops forever.
-        """
         # Check the neighborhood walls and grid limits
         obstacles = self.check_walls_and_lim()
-    
+
         # Loop until a CLEAR position is found
         while True:
-
+                    
             movement = self.online_dfs((self.x, self.y))
+            dx, dy = Explorer.AC_INCR[movement]
+            position = (self.x + dx, self.y + dy)
             # Check if the corresponding position in walls_and_lim is CLEAR
             if obstacles[movement] == VS.CLEAR:
-                return Explorer.AC_INCR[movement]
+                if not self.map.in_map(position) or self.is_unbacktracking:
+                    return Explorer.AC_INCR[movement]
+        
         
     def explore(self):
         # get an random increment for x and y       
@@ -317,7 +289,7 @@ class Explorer(AbstAgent):
         time_tolerance = 2* self.COST_DIAG * Explorer.MAX_DIFFICULTY + self.COST_READ
 
         # keeps exploring while there is enough time
-        if ( self.get_rtime() > (self.manhattan_distance((self.x, self.y)) + time_tolerance + 10) ) and self.flag_explore:
+        if ( self.get_rtime() > (self.manhattan_distance((self.x, self.y)) + time_tolerance + 40) ) and self.flag_explore:
             self.explore()
             return True
 
