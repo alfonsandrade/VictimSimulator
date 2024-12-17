@@ -92,7 +92,7 @@ class Explorer(AbstAgent):
 
 
     def manhattan_distance(self, position):
-        return abs(position[0])+abs(position[1])*1.5
+        return abs(position[0])+abs(position[1])*1.5*2
 
 
     # Função para realizar a exploração do mapa
@@ -289,7 +289,7 @@ class Explorer(AbstAgent):
         time_tolerance = 2* self.COST_DIAG * Explorer.MAX_DIFFICULTY + self.COST_READ
 
         # keeps exploring while there is enough time
-        if ( self.get_rtime() > (self.manhattan_distance((self.x, self.y)) + time_tolerance + 40) ) and self.flag_explore:
+        if ( self.get_rtime() > (self.manhattan_distance((self.x, self.y)) + time_tolerance) ) and self.flag_explore:
             self.explore()
             return True
 
