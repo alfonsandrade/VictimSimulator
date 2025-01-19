@@ -289,7 +289,7 @@ class Explorer(AbstAgent):
         time_tolerance = 2* self.COST_DIAG * Explorer.MAX_DIFFICULTY + self.COST_READ
 
         # keeps exploring while there is enough time
-        if ( self.get_rtime() > (self.manhattan_distance((self.x, self.y)) + time_tolerance) ) and self.flag_explore:
+        if ( self.get_rtime() > (self.manhattan_distance((self.x, self.y)) + 100 + time_tolerance) ) and self.flag_explore:
             self.explore()
             return True
 
