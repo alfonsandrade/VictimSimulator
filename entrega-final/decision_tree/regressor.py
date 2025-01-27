@@ -5,6 +5,7 @@ import logging as log
 import itertools
 
 from sklearn.tree import DecisionTreeRegressor
+from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.model_selection import cross_validate
 from sklearn.model_selection import train_test_split
@@ -22,7 +23,7 @@ Run = 'TESTING'                # (You must use 'TRAINING' or 'TESTING')
 Settings = 'PRESSURE'       # (You must use 'NOT_PRESSURE' or 'PRESSURE')
 
 # Path to desired dataset
-file_path = "datasets/data_800v/env_vital_signals.txt"
+file_path = "datasets/data_4000v/env_vital_signals.txt"
 
 # Loading desired dataset
 dataset = pd.read_csv(file_path, sep=',', header=None)
@@ -37,6 +38,10 @@ if Settings == 'PRESSURE':
 elif Settings == 'NOT_PRESSURE':
     X = dataset[['qPA', 'pulso', 'fResp']]
 y = dataset['grav']  
+
+# Padronizando os dados (normalização)
+# Para garantir que as variáveis estejam em uma escala similar, evitando que variáveis com maior amplitude de valores dominem o processo de aprendizado de máquina. Realiza a normalização dos dados com base na média e no desvio padrão, transformando os dados para que tenham uma média de 0 e desvio padrão de 1.
+X = StandardScaler().fit_transform(X)
 
 # Exibir as primeiras amostras
 log.debug(f"O dataset possui (linhas, colunas): {dataset.shape}.")

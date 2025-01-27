@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import logging as log
 
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import accuracy_score
@@ -34,6 +35,10 @@ if Settings == 'PRESSURE':
 elif Settings == 'NOT_PRESSURE':
     X = dataset[['qPA', 'pulso', 'fResp']]
 y = dataset['label']  
+
+# Padronizando os dados (normalização)
+# Para garantir que as variáveis estejam em uma escala similar, evitando que variáveis com maior amplitude de valores dominem o processo de aprendizado de máquina. Realiza a normalização dos dados com base na média e no desvio padrão, transformando os dados para que tenham uma média de 0 e desvio padrão de 1.
+X = StandardScaler().fit_transform(X)
 
 # Exibir as primeiras amostras
 log.debug(f"O dataset possui (linhas, colunas): {dataset.shape}.")
@@ -93,7 +98,7 @@ elif Run == 'TESTING':
     best_scoring = DecisionTreeClassifier(
         criterion = 'entropy',
         max_depth = 10,
-        min_samples_leaf = 3,
+        min_samples_leaf = 2,
         random_state = 42
     )
 

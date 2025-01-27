@@ -20,13 +20,13 @@ print(f'X:\n{X}\n')
 y = data['label']
 print(f'Y:\n{y}\n')
 
-# Dividindo os dados em conjunto de treinamento e teste
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.75, random_state=42, shuffle=True)
-
 # Padronizando os dados (normalização)
 # Para garantir que as variáveis estejam em uma escala similar, evitando que variáveis com maior amplitude de valores dominem o processo de aprendizado de máquina. Realiza a normalização dos dados com base na média e no desvio padrão, transformando os dados para que tenham uma média de 0 e desvio padrão de 1.
 X = StandardScaler().fit_transform(X)
 print(f'X Normalizado:\n{X}\n')
+
+# Dividindo os dados em conjunto de treinamento e teste
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.75, random_state=42, shuffle=True)
 
 # Definindo as parametrizações
 param_grid = {
