@@ -77,11 +77,18 @@ class Explorer(AbstAgent):
     # 7: (-1, -1)  # ul: Up left diagonal        
     def actions(self, position):
         
+        # orderToCorner = {
+        #     "EXPL_1": [0, 2, 4, 1, 3, 7, 6, 5], # Corner Up Right 
+        #     "EXPL_2": [4, 2, 0, 3, 1, 5, 6, 7], # Corner down Right 
+        #     "EXPL_3": [4, 6, 0, 5, 1, 3, 2, 7], # Corner Down Left 
+        #     "EXPL_4": [0, 6, 4, 1, 5, 7, 2, 3], # Corner Up Left 
+        # }
+
         orderToCorner = {
-            "EXPL_1": [0, 2, 4, 1, 3, 7, 6, 5], # Corner Up Right 
-            "EXPL_2": [4, 2, 0, 3, 1, 5, 6, 7], # Corner down Right 
-            "EXPL_3": [4, 6, 0, 5, 1, 3, 2, 7], # Corner Down Left 
-            "EXPL_4": [0, 6, 4, 1, 5, 7, 2, 3], # Corner Up Left 
+            "EXPL_1": [0, 7, 1, 6, 2, 5, 3, 4], # Corner UP Right 
+            "EXPL_2": [4, 3, 5, 2, 6, 1, 7, 0], # Corner DOWN Left 
+            "EXPL_3": [2, 1, 3, 0, 4, 7, 5, 6], # Corner Down RIGHT 
+            "EXPL_4": [6, 5, 7, 4, 0, 3, 1, 2], # Corner Up LEFT 
         }
 
         # Obtem a ordem baseada no nome do robô
