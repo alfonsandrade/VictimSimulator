@@ -21,6 +21,8 @@ from vs.physical_agent import PhysAgent
 from vs.constants import VS
 from bfs import BFS
 from abc import ABC, abstractmethod
+import regressor
+import classifier
 
 
 ## Classe que define o Agente Rescuer com um plano fixo
@@ -129,10 +131,20 @@ class Rescuer(AbstAgent):
 
             This implementation assigns random values to both, severity value and class"""
 
-        for vic_id, values in self.victims.items():
-            severity_value = random.uniform(0.1, 99.9)          # to be replaced by a regressor 
-            severity_class = random.randint(1, 4)               # to be replaced by a classifier
-            values[1].extend([severity_value, severity_class])  # append to the list of vital signals; values is a pair( (x,y), [<vital signals list>] )
+        dataset = []
+
+        # Generating dataset with victims data
+        for _, values in self.victims.items():
+            _, victim_data = values
+            dataset.append(victim_data)
+
+        # Using regressor and classifier to predict severity and class of each victim
+        severity_predicted = regressor.decision_tree_regressor("NOT_PRESSURE", dataset)
+        class_predict = classifier.decision_tree_classifier("NOT_PRESSURE", dataset)
+
+        # Adjusting each victim information with predicted values
+        for i, (_, values) in enumerate(self.victims.items()):
+            values[1].extend([int(severity_predicted[i]), int(class_predict[i])])
 
 
     def sequencing(self):
