@@ -88,8 +88,6 @@ class Rescuer(AbstAgent):
         lower_ylim = sys.maxsize
         upper_xlim = -sys.maxsize - 1
         upper_ylim = -sys.maxsize - 1
-
-        vic = self.victims
     
         for key, values in self.victims.items():
             x, y = values[0]
@@ -101,8 +99,8 @@ class Rescuer(AbstAgent):
         # Calculate midpoints
         mid_x = lower_xlim + (upper_xlim - lower_xlim) / 2
         mid_y = lower_ylim + (upper_ylim - lower_ylim) / 2
-        print(f"{self.NAME} ({lower_xlim}, {lower_ylim}) - ({upper_xlim}, {upper_ylim})")
-        print(f"{self.NAME} cluster mid_x, mid_y = {mid_x}, {mid_y}")
+        # print(f"{self.NAME} ({lower_xlim}, {lower_ylim}) - ({upper_xlim}, {upper_ylim})")
+        # print(f"{self.NAME} cluster mid_x, mid_y = {mid_x}, {mid_y}")
     
         # Divide dictionary into quadrants
         upper_left = {}
@@ -111,6 +109,18 @@ class Rescuer(AbstAgent):
         lower_right = {}
         
         for key, values in self.victims.items():  # values are pairs: ((x,y), [<vital signals list>])
+            # Clustering using severity of victims
+            # severity = values[1][-2]
+            # if severity <= 25:
+            #     upper_left[key] = values
+            # elif severity <= 50:
+            #     upper_right[key] = values
+            # elif severity <= 75:
+            #     lower_left[key] = values
+            # else:
+            #     lower_right[key] = values
+
+            # Clustering using position of victims
             x, y = values[0]
             if x <= mid_x:
                 if y <= mid_y:
@@ -228,7 +238,6 @@ class Rescuer(AbstAgent):
             # self.map.draw()
             # print(f"{self.NAME} found victims by all explorers:\n{self.victims}")
 
-            # @TODO predict the severity and the class of victims using a classifier/regressor
             self.predict_severity_and_class()
 
             # @TODO cluster the victims possibly using the severity and other criteria
