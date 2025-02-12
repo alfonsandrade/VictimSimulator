@@ -149,8 +149,8 @@ elif Run == 'TESTING':
     acc_test = accuracy_score(y_test, y_pred_test) * 100
     log.info("=========== RESULTADO DO TESTE CEGO ===========")
     log.info(f"Acuracia com dados de teste cego: {acc_test:.2f}%\n")
-    with open("classifier.pkl", "wb") as f:
-        pickle.dump(best_scoring, f)
+    # with open("classifier.pkl", "wb") as f:
+    #     pickle.dump(best_scoring, f)
     
 
 # If you want to see DECISION TREE used
@@ -163,6 +163,7 @@ elif Run == 'TESTING':
 # plt.show()
 
 # If you want to see CONFUSION MATRIX
-# from sklearn.metrics import ConfusionMatrixDisplay
-# ConfusionMatrixDisplay.from_predictions(y_test, y_pred_test)
-# print(classification_report(y_test, y_pred_test))
+from sklearn.metrics import ConfusionMatrixDisplay
+ConfusionMatrixDisplay.from_predictions(y_test, y_pred_test)
+plt.show()
+print(classification_report(y_test, y_pred_test))

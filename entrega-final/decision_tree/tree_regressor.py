@@ -26,7 +26,7 @@ Run = 'TESTING'                # (You must use 'TRAINING' or 'TESTING')
 Settings = 'NOT_PRESSURE'       # (You must use 'NOT_PRESSURE' or 'PRESSURE')
 
 # Path to desired dataset
-file_path = "datasets/data_800v/env_vital_signals.txt"
+file_path = "datasets/data_4000v/env_vital_signals.txt"
 
 # Loading desired dataset
 dataset = pd.read_csv(file_path, sep=',', header=None)
@@ -153,8 +153,8 @@ if Run == 'TRAINING':
 # *****************************                        TESTING MODEL                       ******************************
 # ***********************************************************************************************************************
 elif Run == 'TESTING':
-    max_depth = 13          # Best max_depth founded when training
-    min_samples_leaf = 2    # Best min_samples_leaf founded when training
+    max_depth = 10          # Best max_depth founded when training
+    min_samples_leaf = 3    # Best min_samples_leaf founded when training
 
     # initializing regressor with best parameters founded
     best_regressor_tree = DecisionTreeRegressor(
@@ -175,34 +175,78 @@ best_regressor_tree.fit(X_test, y_test)
 # Realizing predictions with test data and calculating MSE
 predictions = best_regressor_tree.predict(X_test)
 mse = mean_squared_error(y_test, predictions)
+r2 = r2_score(y_test, predictions)
+mae = mean_absolute_error(y_test, predictions)
 log.info("=========== RESULTADO DO TESTE CEGO ===========")
-log.info(f"Teste Cego - MSE: {mse}\n")
-with open("regressor.pkl", "wb") as f:
-    pickle.dump(best_regressor_tree, f)
+log.info(f"Métricas - MSE: {mse}, MAE: {mae}, R2: {r2}\n")
+# with open("regressor.pkl", "wb") as f:
+#     pickle.dump(best_regressor_tree, f)
+
+# # PLOT DAS MÉTRICAS
+# # Criando os rótulos e valores
+# metrics = ['MSE', 'MAE', 'R²']
+# values = [mse, mae, r2]
+
+# # Criando o gráfico de barras
+# plt.figure(figsize=(8, 5))
+# plt.bar(metrics, values, color=['blue', 'orange', 'green'])
+
+# # Adicionando rótulos
+# plt.ylabel("Metric Value")
+# plt.title("Model Performance Metrics")
+# plt.ylim(min(values) * 0.9, max(values) * 1.1)  # Ajusta os limites do eixo Y
+# plt.grid(axis='y', linestyle='--', alpha=0.7)
+
+# # Adicionando valores em cima das barras
+# for i, v in enumerate(values):
+#     plt.text(i, v + (max(values) * 0.02), f"{v:.4f}", ha='center', fontsize=12)
+
+# plt.show()
+
 
 # ***********************************************************************************************************************
 # *****************************                        Ploting Figures                       ****************************
 # ***********************************************************************************************************************
-# plt.figure(figsize=(10, 6))
-# # For each parameterization, defines a new color using list comprehensions
-# colors = [
-#     [plt.cm.tab10(i * 2), plt.cm.tab10(i * 2 + 1)]
-#     for i in range(len(param_combinations))
-# ]
+# # Criar listas para armazenar as métricas
+# train_mse = []
+# vld_mse = []
+# train_r2 = []
+# vld_r2 = []
+# # Calcular métricas para cada parametrização
+# for i, (depth, min_samples) in enumerate(param_combinations):
+#     train_mean_mse = -train_scores[i].mean()
+#     valid_mean_mse = -vld_scores[i].mean()
+#     train_mean_r2 = np.mean(1 - (train_scores[i] / np.var(y_train)))
+#     valid_mean_r2 = np.mean(1 - (vld_scores[i] / np.var(y_test)))
+    
+#     train_mse.append(train_mean_mse)
+#     vld_mse.append(valid_mean_mse)
+#     train_r2.append(train_mean_r2)
+#     vld_r2.append(valid_mean_r2)
 
-# for i in range(len(param_combinations)):
-#     # Ploting
-#     plt.plot(range(1, len(train_scores[i]) + 1), train_scores[i], label=f"{i+1} Train Neg MSE", marker='o', color=colors[i][0])
-#     plt.plot(range(1, len(vld_scores[i]) + 1), vld_scores[i], label=f"{i+1} Valid Neg MSE {i+1}", marker='o', color=colors[i][1])
-#     plt.axhline(train_scores[i].mean(), color=colors[i][0], linestyle='--', label=f"{i+1} Train.mean {i+1}: {train_scores[i].mean():.2f}")
-#     plt.axhline(vld_scores[i].mean(), color=colors[i][1], linestyle='--', label=f"{i+1} Valid.mean {i+1}: {vld_scores[i].mean():.2f}")
+# # Criar gráfico com múltiplas métricas
+# plt.figure(figsize=(12, 6))
+# param_labels = [f"D{d}-L{s}" for d, s in param_combinations]
 
-#     # Add labels and legend
-#     plt.xlabel("Fold")
-#     plt.ylabel("Neg MSE")
-#     plt.title("Training and Validation Scores (Bias and Variance)")
-#     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-#     plt.xticks(np.arange(1, k_folds + 1, 1))
-#     plt.grid()
-#     plt.tight_layout()
-#     plt.show()
+# plt.plot(param_labels, train_mse, marker='o', label='Train MSE', linestyle='-')
+# plt.plot(param_labels, vld_mse, marker='s', label='Validation MSE', linestyle='--')
+
+# plt.xticks(rotation=45)
+# plt.xlabel("Parametrização (Depth - Min Samples)")
+# plt.ylabel("Metric Values")
+# plt.title("Métricas - MSE")
+# plt.legend()
+# plt.grid()
+# plt.tight_layout()
+# plt.show()
+
+# plt.plot(param_labels, train_r2, marker='o', label='Train R²', linestyle='-')
+# plt.plot(param_labels, vld_r2, marker='s', label='Validation R²', linestyle='--')
+# plt.xticks(rotation=45)
+# plt.xlabel("Parametrização (Depth - Min Samples)")
+# plt.ylabel("Metric Values")
+# plt.title("Métricas - R²")
+# plt.legend()
+# plt.grid()
+# plt.tight_layout()
+# plt.show()
