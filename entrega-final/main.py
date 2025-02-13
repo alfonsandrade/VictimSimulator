@@ -36,12 +36,16 @@ def main(data_folder_name, config_ag_folder_name):
 if __name__ == '__main__':
     """ To get data from a different folder than the default called data
     pass it by the argument line"""
-    
-    if len(sys.argv) > 1:
-        data_folder_name = sys.argv[1]
-        config_ag_folder_name = sys.argv[2]
-    else:
-        data_folder_name = os.path.join("datasets", "data_400v_90x90")
-        config_ag_folder_name = os.path.join("ex03_mas_rescuers", "cfg_1")
+
+    if len(sys.argv) != 3:
+        print(f'Usage: py {sys.argv[0]} dataset_folder config_folder')
+        print(f'Exemple: py {sys.argv[0]} ..\datasets\data_132v_100X80 .\config_1')
+        sys.exit(0)
+
+    data_folder_name = sys.argv[1]
+    config_ag_folder_name = sys.argv[2]
+
+    print(f'dataset folder: {data_folder_name}')
+    print(f'config folder: {config_ag_folder_name}')
         
     main(data_folder_name, config_ag_folder_name)

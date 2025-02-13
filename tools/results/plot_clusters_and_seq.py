@@ -38,7 +38,7 @@ import sys
 ABS_COORDINATES = False
 
 # Input files and folders
-data_folder = "./datasets/data_408v_94x94"
+data_folder = "./datasets/data_400v_90x90"
 env_file = "env_config.txt"                       # the program concatenates data_folder + env_file
 obst_file = "env_obst.txt"                        # the program concatenates data_folder + obst_file                      
 victims_file = "env_victims.txt"                  # the program concatenates data_folder + victims_file   
